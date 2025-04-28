@@ -1,0 +1,46 @@
+/* Basic page styles */
+body {
+  font-family: 'Courier New', Courier, monospace;  /* Use monospace font */
+  background-color: #000;                          /* Black background */
+  color: white;                                    /* White font */
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100vh;
+  margin: 0;
+}
+
+.cowsay {
+  background: #111;
+  padding: 20px;
+  margin-top: 20px;
+  white-space: pre;
+  font-family: 'Courier New', Courier, monospace;
+  max-width: 80%;
+  overflow-wrap: break-word;
+  text-align: left;
+  font-weight: bold;  /* Make the text bold */
+  background: linear-gradient(90deg, red, orange, yellow, green, cyan, blue, purple);  /* Rainbow gradient */
+  -webkit-background-clip: text;  /* Clip the background to the text */
+  color: transparent;  /* Make text color transparent to see the gradient */
+  animation: rainbowFlow 5s infinite linear;  /* Animate the rainbow flow */
+  
+  font-size: 3vw;  /* Adjust font size based on viewport width (vw = 1% of viewport width) */
+  word-wrap: break-word;  /* Ensure words break properly */
+  max-width: 90%;  /* Set a max-width to avoid the text being too big on large screens */
+}
+
+/* Flowing rainbow animation */
+@keyframes rainbowFlow {
+  0% {
+    background-position: 100% 0;
+  }
+  50% {
+    background-position: -100% 0;
+  }
+  100% {
+    background-position: 100% 0;
+  }
+}
