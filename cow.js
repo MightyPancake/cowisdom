@@ -151,19 +151,18 @@ function changeDateBy(days) {
   window.location.href = url.toString(); // reloads with new date param
 }
 
-// Countdown until midnight
+// Countdown until midnight UTC
 function startCountdownToMidnight() {
   function updateCountdown() {
     const now = new Date();
-    const midnight = new Date();
-    midnight.setHours(24, 0, 0, 0); // Next midnight
+    const midnightUTC = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1, 0, 0, 0, 0)); // Next midnight UTC
 
-    const diffMs = midnight - now;
+    const diffMs = midnightUTC - now;
     const hours = Math.floor(diffMs / (1000 * 60 * 60));
     const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
     const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
 
-    const countdownText = `Great knowledge requires much thought...\nGive me roughly ${hours}h ${minutes}m ${seconds}s.`;
+    const countdownText = `I'm glad you long for wisdom!\nGreat knowledge requires much thought though...\nGive me roughly ${hours}h ${minutes}m ${seconds}s.`;
     renderCowsay(countdownText);
   }
 
