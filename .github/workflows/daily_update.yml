@@ -1,0 +1,30 @@
+# .github/workflows/daily_update.yml
+
+name: Daily update
+
+on:
+  schedule:
+    - cron: '0 12 * * *' # Every day at 12:00 UTC (adjust as needed)
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  post-fortune:
+    runs-on: ubuntu-latest
+
+    env:
+      AIRTABLE_API_TOKEN: ${{ secrets.AIRTABLE_API_TOKEN }}
+      AIRTABLE_BASE_ID: ${{ secrets.AIRTABLE_BASE_ID }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y fortune
+          pip install requests
+
+      - name: Run post_fortune.sh
+        run: |
+          bash post_fortune.sh
