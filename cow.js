@@ -26,6 +26,7 @@ async function fetchQuote() {
     nextButton.style.visibility = 'visible';
     nextButton.style.pointerEvents = 'auto';
   }
+
   renderCowsay("I'm loading...");
 
   const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula=IS_SAME({date}, '${formatDateForAirtable(dateToUse)}', 'day')&maxRecords=1`;
@@ -43,10 +44,18 @@ async function fetchQuote() {
       const quote = data.records[0].fields.quote;
       renderCowsay(quote);
     } else {
-      renderCowsay('404 - Wisdom not found!');
+      if (isSameDay(dateToUse, today)) {
+        startCountdownToMidnight();
+      } else {
+        renderCowsay('404 - Wisdom not found!');
+      }
     }
   } catch (error) {
-    renderCowsay('404 - Wisdom not found!');
+    if (isSameDay(dateToUse, today)) {
+      startCountdownToMidnight();
+    } else {
+      renderCowsay('404 - Wisdom not found!');
+    }
   }
 }
 
@@ -142,7 +151,34 @@ function changeDateBy(days) {
   window.location.href = url.toString(); // reloads with new date param
 }
 
-//Listeners
+// Countdown until midnight
+function startCountdownToMidnight() {
+  function updateCountdown() {
+    const now = new Date();
+    const midnight = new Date();
+    midnight.setHours(24, 0, 0, 0); // Next midnight
+
+    const diffMs = midnight - now;
+    const hours = Math.floor(diffMs / (1000 * 60 * 60));
+    const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diffMs % (1000 * 60)) / 1000);
+
+    const countdownText = `Great knowledge requires much thought...\nGive me roughly ${hours}h ${minutes}m ${seconds}s.`;
+    renderCowsay(countdownText);
+  }
+
+  updateCountdown();
+  setInterval(updateCountdown, 1000); // Update every second
+}
+
+// Helper function to compare if two dates are the same day
+function isSameDay(date1, date2) {
+  return date1.getFullYear() === date2.getFullYear() &&
+         date1.getMonth() === date2.getMonth() &&
+         date1.getDate() === date2.getDate();
+}
+
+// Listeners
 document.getElementById('prevDay').addEventListener('click', () => {
   changeDateBy(-1);
 });
@@ -163,6 +199,5 @@ document.addEventListener('keydown', (event) => {
     }
   }
 });
-
 
 fetchQuote();
