@@ -1,15 +1,32 @@
 const AIRTABLE_API_TOKEN = 'patxBzde6f82PubHD.c094186be828f6c79d1333e654ea603e412bb6a1629706763aaff4c1fbb7079d';
 const BASE_ID = 'appuIM6nNhskdWUXd';
 const TABLE_NAME = 'fortune';
-const MAX_LINE_LENGTH = 46;
+const MAX_LINE_LENGTH = 50;
 
 async function fetchQuote() {
-  // Get the date from the URL parameter or use today's date if not provided
   const dateParam = getUrlParam('date');
   const dateToUse = dateParam ? new Date(dateParam.split('-').reverse().join('-')) : new Date();
 
-  // Display loading cow with "I'm loading..." message initially
-  renderCowsay("I'm loading...", dateToUse);
+  // Set title and date immediately
+  document.getElementById('title').textContent = "Today's wisdom";
+  document.getElementById('date').textContent = formatDate(dateToUse);
+
+  // Hide or show nextDay button depending on whether the date is today
+  const today = new Date();
+  if (
+    dateToUse.getFullYear() === today.getFullYear() &&
+    dateToUse.getMonth() === today.getMonth() &&
+    dateToUse.getDate() === today.getDate()
+  ) {
+    const nextButton = document.getElementById('nextDay');
+    nextButton.style.visibility = 'hidden';  // invisible but space reserved
+    nextButton.style.pointerEvents = 'none'; // not clickable
+  } else {
+    const nextButton = document.getElementById('nextDay');
+    nextButton.style.visibility = 'visible';
+    nextButton.style.pointerEvents = 'auto';
+  }
+  renderCowsay("I'm loading...");
 
   const url = `https://api.airtable.com/v0/${BASE_ID}/${TABLE_NAME}?filterByFormula=IS_SAME({date}, '${formatDateForAirtable(dateToUse)}', 'day')&maxRecords=1`;
 
@@ -20,82 +37,84 @@ async function fetchQuote() {
       }
     });
 
-    // Check if the response is successful (status 200)
-    if (!response.ok) {
-      throw new Error('Network response was not ok');
-    }
-
     const data = await response.json();
 
-    // Check if data.records is available and contains a quote
     if (data.records && data.records.length > 0) {
       const quote = data.records[0].fields.quote;
-      renderCowsay(quote, dateToUse);
+      renderCowsay(quote);
     } else {
-      renderCowsay('404 - Wisdom not found!', dateToUse);
+      renderCowsay('404 - Wisdom not found!');
     }
   } catch (error) {
-    console.error('There was a problem fetching the quote:', error);
-    renderCowsay('404 - Wisdom not found!', dateToUse);
+    renderCowsay('404 - Wisdom not found!');
   }
 }
 
-function renderCowsay(text, dateToUse) {
-  const lines = splitTextIntoLines(text, MAX_LINE_LENGTH);
-  
-  // Ensure all lines are the same length by adding trailing spaces
-  const maxLineLength = Math.max(...lines.map(line => line.length)); // Find the longest line
-  const paddedLines = lines.map(line => line.padEnd(maxLineLength, ' ')); // Add spaces to each line to match the longest one
+function renderCowsay(text) {
+  const paragraphs = text.split('\n'); // split hard lines first!
+  let lines = [];
 
-  const topBottomBorder = '-'.repeat(maxLineLength + 2); // Create the top/bottom border with the same width as the longest line
-  // Add the date two lines below the cow
-  const todayDate = formatDate(dateToUse);
+  paragraphs.forEach(paragraph => {
+    if (paragraph.trim() === '') {
+      lines.push('');
+    } else {
+      const wrapped = splitTextIntoLines(paragraph, MAX_LINE_LENGTH);
+      lines = lines.concat(wrapped);
+    }
+  });
 
-  let cowArt = `                Today's wisdom
+  const maxLineLength = Math.max(...lines.map(line => line.length));
+  const paddedLines = lines.map(line => line.padEnd(maxLineLength, ' '));
+  const topBorder = '_'.repeat(maxLineLength);
+  const topBorder2 = '/' + ' '.repeat(maxLineLength) + '\\';
+  const bottomBorder = '\\' + '_'.repeat(maxLineLength) + '/';
 
-                
- ${topBottomBorder}
+  const cowArt = `  ${topBorder}
+ ${topBorder2}
 ${paddedLines.map(line => `| ${line} |`).join('\n')}
- ${topBottomBorder}
-            \\   ^__^
-             \\  (oo)\\_______
-                (__)\\       )\\/\\
-                    ||----w |
-                    ||     ||
-
-                  ${todayDate}
-                  `;
+ ${bottomBorder}
+           \\  |
+            \\ | ^__^                          
+             \\| (oo)\\_______                 
+                (__)\\       )\\/\\            
+                    ||----w |                  
+                    ||     ||`;
 
   document.getElementById('cowsay').textContent = cowArt;
 }
 
-// Function to split the quote into lines of MAX_LINE_LENGTH
 function splitTextIntoLines(text, maxLength) {
-  const words = text.split(' ');
+  text = text.replace(/\t/g, '    ');  // Replace tabs with 4 spaces
+
+  const tokens = text.split(/(\s+|\n)/);
   let lines = [];
   let currentLine = '';
 
-  words.forEach(word => {
-    if ((currentLine + word).length < maxLength) {
-      currentLine += (currentLine ? ' ' : '') + word;
-    } else {
+  tokens.forEach(token => {
+    if (token === '\n') {
+      if (currentLine.trim()) {
+        lines.push(currentLine);
+      }
+      currentLine = '';
+    } else if ((currentLine + token).length > maxLength) {
       lines.push(currentLine);
-      currentLine = word;
+      currentLine = token.trimStart();
+    } else {
+      currentLine += token;
     }
   });
 
-  if (currentLine) {
-    lines.push(currentLine); // Push the last line
+  if (currentLine.trim()) {
+    lines.push(currentLine);
   }
 
   return lines;
 }
 
 function formatDate(date) {
-  const day = String(date.getDate()).padStart(2, '0'); // Pad single digit days
-  const month = String(date.getMonth() + 1).padStart(2, '0'); // Pad single digit months, add 1 since getMonth() is 0-based
-  const year = date.getFullYear(); // Get full year
-
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
   return `${day}-${month}-${year}`;
 }
 
@@ -104,13 +123,46 @@ function getUrlParam(name) {
   return urlParams.get(name);
 }
 
-// Function to format date as yyyy-mm-dd (Airtable format)
 function formatDateForAirtable(date) {
   const day = String(date.getDate()).padStart(2, '0');
   const month = String(date.getMonth() + 1).padStart(2, '0');
   const year = date.getFullYear();
-
   return `${year}-${month}-${day}`;
 }
+
+function changeDateBy(days) {
+  const dateParam = getUrlParam('date');
+  let currentDate = dateParam ? new Date(dateParam.split('-').reverse().join('-')) : new Date();
+
+  currentDate.setDate(currentDate.getDate() + days);
+
+  const newDateStr = formatDate(currentDate);
+  const url = new URL(window.location);
+  url.searchParams.set('date', newDateStr);
+  window.location.href = url.toString(); // reloads with new date param
+}
+
+//Listeners
+document.getElementById('prevDay').addEventListener('click', () => {
+  changeDateBy(-1);
+});
+
+document.getElementById('nextDay').addEventListener('click', () => {
+  changeDateBy(1);
+});
+
+document.addEventListener('keydown', (event) => {
+  if (event.key === 'ArrowLeft') {
+    // Simulate previous day
+    document.getElementById('prevDay').click();
+  } else if (event.key === 'ArrowRight') {
+    // Simulate next day
+    const nextButton = document.getElementById('nextDay');
+    if (nextButton.style.visibility !== 'hidden') {
+      nextButton.click();
+    }
+  }
+});
+
 
 fetchQuote();
